@@ -142,10 +142,9 @@
       <div class="finishText" id="finishText"></div>
       <div id="review"></div>
       <div class="controls">
-        <button class="primary" id="repeatAll">Alle wiederholen</button>
-        <button class="secondary" id="repeatWrong">Nur falsche</button>
-        <button class="secondary" id="repeatUnknown">Nur „Weiss nicht“</button>
-      </div>
+  <button class="primary" id="repeatAll">Alle wiederholen</button>
+  <button class="secondary" id="repeatWrongUnknown">Falsch / Weiss nicht wiederholen</button>
+</div>
       <div class="hint">Du kannst auch die Reihenfolge oben ändern und eine neue Runde starten.</div>
       <button class="secondary" id="restart" style="margin-top:12px;width:100%">Neue Runde</button>
     </div>
@@ -464,9 +463,8 @@ function showFinish(){
       }`
     : `<p>Alles richtig beantwortet! 🏆</p>`;
 
-  $("repeatAll").disabled=false;
-  $("repeatWrong").disabled=!mistakes.length;
-  $("repeatUnknown").disabled=!unknowns.length;
+$("repeatAll").disabled=false;
+$("repeatWrongUnknown").disabled=!(mistakes.length || unknowns.length);
 }
 
 function repeatWords(words){
@@ -484,8 +482,11 @@ $("quizForm").addEventListener("submit",e=>{
 
 $("btnSkip").addEventListener("click",e=>{ e.preventDefault(); });
 $("repeatAll").addEventListener("click",()=>repeatWords(roundData));
-$("repeatWrong").addEventListener("click",()=>repeatWords(mistakes));
-$("repeatUnknown").addEventListener("click",()=>repeatWords(unknowns));
+
+$("repeatWrongUnknown").addEventListener("click",()=>{
+  repeatWords([...mistakes,...unknowns]);
+});
+
 $("restart").addEventListener("click",()=>init(data));
 
 $("orderMode").addEventListener("change",()=>init(data));
