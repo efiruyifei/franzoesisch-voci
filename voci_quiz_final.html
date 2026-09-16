@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Französisch Voci – Lernquiz</title>
+<style>
+  :root{
+    --bg:#f4f7fb; --card:#fff; --text:#182230; --muted:#687386;
+    --primary:#3b82f6; --primary2:#2563eb; --green:#16a34a;
+    --red:#dc2626; --border:#dce3ec; --soft:#eef4ff;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; padding:20px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:linear-gradient(135deg,#eef4ff,#f8fafc);
+    color:var(--text); display:flex; justify-content:center; align-items:center;
+  }
+  .app{width:100%;max-width:720px}
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:22px;
+    box-shadow:0 12px 40px rgba(20,40,70,.10); padding:28px;
+  }
+  h1{margin:0 0 6px;text-align:center;font-size:1.7rem}
+  .subtitle{text-align:center;color:var(--muted);margin-bottom:22px}
+  .settings{
+    display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px
+  }
+  .setting{
+    border:1px solid var(--border);border-radius:14px;padding:12px 14px;background:#fafcff
+  }
+  .setting label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:6px}
+  select{
+    width:100%;border:0;background:transparent;font-size:1rem;font-weight:600;
+    color:var(--text);outline:none;cursor:pointer
+  }
+  .label{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:7px}
+  .word{
+    font-size:2.15rem;font-weight:800;line-height:1.2;margin-bottom:8px;
+    overflow-wrap:anywhere
+  }
+  .prompt{color:var(--muted);margin-bottom:16px}
+  input[type=text]{
+    width:100%;padding:15px 16px;font-size:1.08rem;border:2px solid var(--border);
+    border-radius:13px;outline:none;transition:.2s;margin-bottom:12px
+  }
+  input[type=text]:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(59,130,246,.10)}
+  input:disabled{background:#f6f7f9}
+  .controls{display:flex;gap:10px;flex-wrap:wrap}
+  button{ -webkit-appearance:none; appearance:none; touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+    flex:1;min-width:130px;padding:13px 16px;border:0;border-radius:12px;
+    font-size:1rem;font-weight:700;cursor:pointer;transition:.15s
+  }
+  button:hover{transform:translateY(-1px)}
+  button:active{transform:scale(.98)}
+  .primary{background:var(--primary);color:white}
+  .primary:hover{background:var(--primary2)}
+  .secondary{background:#e9eef5;color:#253247}
+  .secondary:hover{background:#dde5ef}
+  .result{display:none;margin-top:15px;padding:14px;border-radius:12px;line-height:1.45;font-weight:700}
+  .result.correct{display:block;background:#dcfce7;color:#166534;border:2px solid #16a34a}
+  .result.wrong{display:block;background:#fee2e2;color:#991b1b;border:2px solid #dc2626}
+  .answer{font-weight:800}
+  .stats{margin-top:18px;text-align:center;color:var(--muted);font-size:.9rem}
+  .bar{height:9px;background:#e9eef5;border-radius:99px;overflow:hidden;margin-top:10px}
+  .bar > div{height:100%;background:var(--primary);width:0%;transition:width .25s}
+  #finish{display:none;text-align:center}
+  .score{font-size:2.4rem;font-weight:800;margin:8px 0}
+  .finishText{color:var(--muted)}
+  #review{text-align:left;margin:20px 0}
+  .review-item{padding:10px 0;border-bottom:1px solid #edf0f4}
+  .review-item b{display:block}
+  .hint{
+    margin-top:18px;padding:12px;border-radius:12px;background:var(--soft);
+    color:#36527c;font-size:.9rem;text-align:center
+  }
+  .topline{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:18px}
+  .counter{font-weight:700;color:var(--muted)}
+  .badge{background:#edf4ff;color:#2457a6;padding:7px 10px;border-radius:99px;font-size:.8rem;font-weight:700}
+  .empty{padding:18px;background:#fff7ed;color:#9a3412;border-radius:12px}
+  @media(max-width:560px){
+    body{padding:10px}.card{padding:20px;border-radius:18px}
+    .settings{grid-template-columns:1fr}.word{font-size:1.8rem}
+    button{ -webkit-appearance:none; appearance:none; touch-action:manipulation; -webkit-tap-highlight-color:transparent;min-width:0}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="card">
+    <div id="quiz">
+      <h1>🇫🇷 Französisch Voci</h1>
+      <div class="subtitle">Übersetze das deutsche Voci ins Französische.</div>
+
+      <div class="settings">
+        <div class="setting">
+          <label for="orderMode">Reihenfolge</label>
+          <select id="orderMode">
+            <option value="original">Original-Reihenfolge</option>
+            <option value="mixed">Gemischt / Zufällig</option>
+          </select>
+        </div>
+        <div class="setting">
+          <label for="direction">Lernrichtung</label>
+          <select id="direction">
+            <option value="de-fr">Deutsch → Französisch</option>
+            <option value="fr-de">Französisch → Deutsch</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="topline">
+        <span class="counter" id="counter"></span>
+        <span class="badge">⌨️ Enter = Prüfen / Weiter</span>
+      </div>
+
+      <div class="label" id="questionLabel">Deutsches Voci</div>
+      <div class="word" id="word">---</div>
+      <div class="prompt" id="prompt">Übersetze dieses deutsche Voci ins Französische:</div>
+
+      <form id="quizForm">
+        <input type="text" id="answer" placeholder="Französische Übersetzung …" autocomplete="off" autofocus>
+        <div class="controls">
+          <button type="submit" class="primary" id="btnCheck">Überprüfen</button>
+          <button type="button" class="secondary" id="btnSkip" aria-label="Weiss nicht" onclick="skip()">Weiss nicht</button>
+        </div>
+      </form>
+
+      <div id="result" class="result"></div>
+      <div class="stats" id="stats"></div>
+      <div class="bar"><div id="progressBar"></div></div>
+
+      <div class="hint">
+        <b>Tastatur:</b> Enter = überprüfen/weiter · → oder ↓ = weiter · ← oder ↑ = vorherige Vokabel
+      </div>
+    </div>
+
+    <div id="finish">
+      <h1>Fertig! 🎉</h1>
+      <div class="score" id="score"></div>
+      <div class="finishText" id="finishText"></div>
+      <div id="review"></div>
+      <div class="controls">
+        <button class="primary" id="repeatAll">Alle wiederholen</button>
+        <button class="secondary" id="repeatWrong">Nur falsche</button>
+        <button class="secondary" id="repeatUnknown">Nur „Weiss nicht“</button>
+      </div>
+      <div class="hint">Du kannst auch die Reihenfolge oben ändern und eine neue Runde starten.</div>
+      <button class="secondary" id="restart" style="margin-top:12px;width:100%">Neue Runde</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/*
+  Vokabelliste: [Französisch, Deutsch]
+  Werbung, "star filled", "sound" usw. wurden bewusst ignoriert.
+*/
+const data = [
+  ["accro (à qc)", "süchtig (nach etw.)"],
+  ["les médias", "die Medien"],
+  ["un smartphone", "ein Smartphone"],
+  ["un ado / une ado", "ein Jugendlicher / eine Jugendliche"],
+  ["se passer de qc", "auf etw. verzichten"],
+  ["indispensable", "unbedingt notwendig"],
+  ["un vidéonaute / une vidéonaute", "ein Videospieler / eine Videospielerin"],
+  ["regarder qc en replay", "etw. streamen"],
+  ["en moyenne", "durchschnittlich, im Durchschnitt"],
+  ["un écran", "ein Bildschirm"],
+  ["au moins", "mindestens, wenigstens"],
+  ["une fois", "ein Mal, einmal"],
+  ["la presse", "die Presse"],
+  ["servir à qc", "zu etw. nützen, zu etw. dienen"],
+  ["un objet", "ein Gegenstand, ein Objekt"],
+  ["communiquer (avec qc)", "kommunizieren, Nachrichten austauschen"],
+  ["un appareil", "ein Apparat, ein Gerät"],
+  ["la liberté", "die Freiheit"],
+  ["jouer à qc", "etw. spielen"],
+  ["une publication", "eine Veröffentlichung, ein Beitrag"],
+  ["l'actualité", "die Aktualität, das Neueste"],
+  ["en ligne", "online"],
+  ["la plupart des", "die meisten"],
+  ["la majorité (des)", "die Mehrheit (von)"],
+  ["la moitié (de)", "die Hälfte (von)"],
+  ["le recyclage", "das Recycling"],
+  ["un département", "ein Departement"],
+  ["entre", "zwischen"],
+  ["le développement durable", "die nachhaltige Entwicklung"],
+  ["un choix", "eine Wahl, eine Auswahl"],
+  ["moins intéressant que", "weniger interessant als"],
+  ["un article", "ein Artikel"],
+  ["plus important que", "wichtiger als"],
+  ["aussi important que", "genauso wichtig wie"],
+  ["un journaliste / une journaliste", "ein Journalist / eine Journalistin"],
+  ["un jugement", "ein Urteil, eine Einschätzung"],
+  ["critique", "kritisch"],
+  ["résumer qc", "etw. zusammenfassen"],
+  ["arriver en avance", "zu früh ankommen"],
+  ["être motivé / motivée", "motiviert sein"],
+  ["professionnel / professionnelle", "professionell"],
+  ["essayer de faire qc", "versuchen, etw. zu tun"],
+  ["se mettre dans la peau de", "in jds. Haut schlüpfen"],
+  ["la rédaction", "die Redaktion"],
+  ["courir", "laufen, rennen"],
+  ["une montre", "eine Uhr"],
+  ["courir contre la montre", "gegen die Zeit anrennen"],
+  ["bavard / bavarde", "gesprächig, geschwätzig"],
+  ["un sujet", "ein Thema"],
+  ["timide", "schüchtern"],
+  ["un incendie", "ein Brand"],
+  ["un tableau / des tableaux", "eine Tafel / Tafeln"],
+  ["certains / certaines", "gewisse, bestimmte"],
+  ["marquant / marquante", "bedeutsam"],
+  ["la une", "die Titelseite"],
+  ["une information", "eine Information"],
+  ["un réflexe", "ein Reflex"],
+  ["faire le tri entre qc", "eine Auswahl treffen zwischen etw."],
+  ["vérifier qc", "etw. überprüfen"],
+  ["une source", "eine Quelle"],
+  ["une phrase", "ein Satz"],
+  ["recommencer", "wieder beginnen"],
+  ["même", "sogar"],
+  ["le meilleur / la meilleure", "der/die/das beste"],
+  ["imprimer qc", "etw. drucken, etw. ausdrucken"],
+  ["un métier", "ein Beruf"],
+  ["une passion", "eine Leidenschaft"],
+  ["apprendre à qn à faire qc", "jdm. beibringen etw. zu tun"],
+  ["une critique de film", "eine Filmkritik"],
+  ["une option", "ein Wahlfach"],
+  ["la société", "die Gesellschaft"],
+  ["étudier qc", "etw. studieren, etw. untersuchen"],
+  ["fréquent / fréquente", "häufig"],
+  ["un smoking", "ein Smoking"],
+  ["une robe", "ein Kleid"],
+  ["une différence", "ein Unterschied"],
+  ["un photographe / une photographe", "ein Fotograf / eine Fotografin"],
+  ["un court métrage", "ein Kurzfilm"],
+  ["un long métrage", "ein Spielfilm"],
+  ["indépendant / indépendante", "unabhängig"],
+  ["toucher qn", "jdn. berühren"],
+  ["avoir un coup de cœur pour qn / qc", "sich in jdn. / etw. verlieben"],
+  ["un drame", "ein Drama"],
+  ["original / originale / originaux / originales", "originell"],
+  ["un scénario", "ein Drehbuch, eine Story"],
+  ["rire", "lachen"],
+  ["un défaut", "ein (Charakter)Fehler"],
+  ["un conseil", "ein Ratschlag"],
+  ["excité / excitée", "aufgeregt"],
+  ["une comédie", "eine Komödie"],
+  ["marquer qn / qc", "jdn. / etw. prägen"],
+  ["un chef-d'oeuvre / des chefs-d'oeuvre", "ein Meisterwerk / Meisterwerke"],
+  ["un genre", "eine Gattung, eine Art"],
+  ["impressionnant / impressionnante", "beeindruckend"],
+  ["ne...que", "nur"],
+  ["un dénouement", "ein Ausgang"],
+  ["drôle", "lustig"],
+  ["une fiche technique", "technische Daten"],
+  ["la date de sortie", "der Filmstart"],
+  ["un film policier", "ein Kriminalfilm"],
+  ["un film fantastique", "ein Fantasyfilm"],
+  ["la science-fiction", "die Science-Fiction"],
+  ["un film d'animation", "ein Animationsfilm"],
+  ["un documentaire", "ein Dokumentarfilm"],
+  ["le suspense", "die Spannung"],
+  ["parfait / parfaite", "perfekt"],
+  ["un navet", "ein Schundfilm"]
+];
+
+let order = [];
+let pos = 0;
+let right = 0;
+let wrong = 0;
+let checked = false;
+let mistakes = [];
+let unknowns = [];
+let roundData = data;
+
+const $ = id => document.getElementById(id);
+
+function escapeHtml(str){
+  return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+/*
+  Bewusst toleranter Vergleich:
+  - Gross-/Kleinschreibung egal
+  - Akzente egal (é = e)
+  - Apostrophe und typografische Apostrophe gleich
+  - Klammern egal: accro (à qc) = accro à qc
+  - Leerzeichen rund um / und Satzzeichen werden vereinheitlicht
+  - Mehrfach-Leerzeichen egal
+  - qc/qn bleiben relevant
+*/
+function norm(s){
+  return String(s)
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[’ʻ`]/g,"'")
+    .replace(/[()]/g," ")
+    .replace(/\s*\/\s*/g," / ")
+    .replace(/\s*[,;:!?]\s*/g," ")
+    .replace(/\s+/g," ")
+    .trim();
+}
+
+function sameAnswer(user, target){
+  const u = norm(user), t = norm(target);
+  if(!u) return false;
+  if(u === t) return true;
+
+  // Häufige, harmlose Schreibvarianten.
+  const variants = [
+    t.replace(/\s*'\s*/g," "),
+    t.replace(/\s+/g,"")
+  ];
+  return variants.some(v => u === norm(v));
+}
+
+function shuffle(arr){
+  const a = [...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function makeOrder(words){
+  return $("orderMode").value === "mixed" ? shuffle(words) : [...words];
+}
+
+function init(words=data){
+  roundData = words;
+  order = makeOrder(words);
+  pos=0; right=0; wrong=0; checked=false; mistakes=[]; unknowns=[];
+  $("quiz").style.display="block";
+  $("finish").style.display="none";
+  update();
+}
+
+function update(){
+  if(pos >= order.length){ showFinish(); return; }
+  if(pos < 0) pos=0;
+
+  checked=false;
+  const [fr,de] = order[pos];
+  const dir = $("direction").value;
+
+  if(dir === "de-fr"){
+    $("questionLabel").textContent="Deutsches Voci";
+    $("word").textContent=de;
+    $("prompt").textContent="Übersetze dieses deutsche Voci ins Französische:";
+    $("answer").placeholder="Französische Übersetzung …";
+  }else{
+    $("questionLabel").textContent="Französisches Voci";
+    $("word").textContent=fr;
+    $("prompt").textContent="Übersetze dieses französische Voci ins Deutsche:";
+    $("answer").placeholder="Deutsche Übersetzung …";
+  }
+
+  $("answer").value="";
+  $("answer").disabled=false;
+  $("result").className="result";
+  $("result").style.display="none";
+  $("btnCheck").textContent="Überprüfen";
+  $("counter").textContent=`Voci ${pos+1} / ${order.length}`;
+  stats();
+  $("answer").focus();
+}
+
+function currentTarget(){
+  return $("direction").value === "de-fr" ? order[pos][0] : order[pos][1];
+}
+
+function currentQuestion(){
+  return $("direction").value === "de-fr" ? order[pos][1] : order[pos][0];
+}
+
+function check(){
+  if(pos >= order.length) return;
+  if(checked){ next(); return; }
+
+  const userAns = $("answer").value;
+  const target = currentTarget();
+
+  checked=true;
+  $("answer").disabled=true;
+
+  if(sameAnswer(userAns,target)){
+    right++;
+    $("result").className="result correct";
+    $("result").style.display="block";
+    $("result").innerHTML=`Richtig, es ist "<span class="answer">${escapeHtml(target)}</span>"`;
+  }else{
+    wrong++;
+    mistakes.push(order[pos]);
+    $("result").className="result wrong";
+    $("result").style.display="block";
+    $("result").innerHTML=`Falsch, es wäre "<span class="answer">${escapeHtml(target)}</span>"`;
+  }
+  $("btnCheck").textContent="Weiter";
+  stats();
+}
+
+function next(){
+  if(!checked){
+    check();
+    return;
+  }
+  pos++;
+  update();
+}
+
+function previous(){
+  if(pos<=0) return;
+  pos--;
+  checked=false;
+  // Beim Zurückgehen keine doppelte Wertung erzeugen.
+  update();
+}
+
+function skip(){
+  // "Weiss nicht" ist nur für eine noch nicht bewertete Vokabel gedacht.
+  // Danach wird die Schaltfläche zu "Weiter" – dadurch kann man auf dem
+  // iPhone einfach weiter tippen oder Enter / Pfeil rechts benutzen.
+  if(checked) return;
+
+  unknowns.push(order[pos]);
+  wrong++;
+  checked=true;
+
+  const answerField = $("answer");
+  answerField.disabled=true;
+
+  $("result").className="result wrong";
+  $("result").style.display="block";
+  $("result").innerHTML=`? Weiss nicht – richtig ist: <span class="answer">${escapeHtml(currentTarget())}</span>`;
+
+  $("btnCheck").textContent="Weiter";
+  stats();
+}
+
+function stats(){
+  const done = right + wrong;
+  const pct = order.length ? Math.round((done/order.length)*100) : 0;
+  $("stats").textContent=`Richtig: ${right} · Falsch/Weiss nicht: ${wrong} · ${pct}% beantwortet`;
+  $("progressBar").style.width=`${pct}%`;
+}
+
+function showFinish(){
+  $("quiz").style.display="none";
+  $("finish").style.display="block";
+
+  const total=order.length;
+  const pct=total ? Math.round((right/total)*100) : 0;
+  $("score").textContent=`${right} / ${total} richtig`;
+  $("finishText").textContent=`Das sind ${pct}% richtige Antworten.`;
+
+  const allReview=[...mistakes,...unknowns];
+  $("review").innerHTML = allReview.length
+    ? `<b>Diese Voci kannst du nochmals anschauen:</b>${
+        allReview.map(x=>`<div class="review-item"><b>${escapeHtml(x[1])}</b><span>→ ${escapeHtml(x[0])}</span></div>`).join("")
+      }`
+    : `<p>Alles richtig beantwortet! 🏆</p>`;
+
+  $("repeatAll").disabled=false;
+  $("repeatWrong").disabled=!mistakes.length;
+  $("repeatUnknown").disabled=!unknowns.length;
+}
+
+function repeatWords(words){
+  if(!words.length){
+    alert("Für diese Auswahl gibt es keine Voci.");
+    return;
+  }
+  init(words);
+}
+
+$("quizForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  check();
+});
+
+$("btnSkip").addEventListener("click",e=>{ e.preventDefault(); });
+$("repeatAll").addEventListener("click",()=>repeatWords(roundData));
+$("repeatWrong").addEventListener("click",()=>repeatWords(mistakes));
+$("repeatUnknown").addEventListener("click",()=>repeatWords(unknowns));
+$("restart").addEventListener("click",()=>init(data));
+
+$("orderMode").addEventListener("change",()=>init(data));
+$("direction").addEventListener("change",()=>update());
+
+document.addEventListener("keydown",e=>{
+  // Pfeiltasten nur ausserhalb von Selects verwenden.
+  if(["INPUT","SELECT","TEXTAREA"].includes(document.activeElement.tagName)){
+    if(document.activeElement.tagName==="INPUT" && e.key==="Enter"){
+      e.preventDefault();
+      check();
+    }
+    return;
+  }
+
+  if(e.key==="ArrowRight" || e.key==="ArrowDown"){
+    e.preventDefault();
+    next();
+  }
+  if(e.key==="ArrowLeft" || e.key==="ArrowUp"){
+    e.preventDefault();
+    previous();
+  }
+});
+
+// Start
+init(data);
+</script>
+</body>
+</html>
